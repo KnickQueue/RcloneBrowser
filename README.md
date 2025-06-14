@@ -212,7 +212,11 @@ Build instructions
 4.  Get rclone-browser source code. You either need to install git and clone it or download zip file from [releases][3]
 5.  Go to source folder `cd RcloneBrowser`
 6.  From cmd create new build folder  - `mkdir build` and then `cd build`
+translate-for-windows-arm-x64
 7.  run `cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_CONFIGURATION_TYPES="Release" -DCMAKE_PREFIX_PATH=c:\Qt\5.13.2\msvc2017_64 .. && cmake --build . --config Release` for a 64-bit build. Use `-A arm64` and the matching ARM64 Qt path to target Windows on ARM
+=======
+7.  run `cmake -G "Visual Studio 16 2019" -A x64 -DCMAKE_CONFIGURATION_TYPES="Release" -DCMAKE_PREFIX_PATH=c:\Qt\5.13.2\msvc2017_64 .. && cmake --build . --config Release` for x64 or replace `-A x64` and the prefix path with the ARM64 equivalents to build for Windows on ARM
+master
 8.  run `c:\Qt\5.13.2\msvc2017_64\bin\windeployqt.exe --no-translations --no-angle --no-compiler-runtime --no-svg ".\build\Release\RcloneBrowser.exe"` (use the ARM64 version when targeting Windows on ARM)
 9.  build\Release folder contains now RcloneBrowser.exe binary and all other files required to run it
 10. If your system does not have required MSVC runtime you can install one from Microsoft [website](https://support.microsoft.com/en-gb/help/2977003/the-latest-supported-visual-c-downloads).

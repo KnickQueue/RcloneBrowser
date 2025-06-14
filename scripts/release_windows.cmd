@@ -1,12 +1,20 @@
 @echo off
 setlocal enabledelayedexpansion
 
-if "%1"=="" (
+if "%1" == "" (
   echo Please specify x86 ^(32-bit^), x64 ^(64-bit^) or arm64 architecture in cmdline
   goto :eof
 )
 
 set ARCH=%1
+set BOTH=0
+if /I not "%ARCH%"=="x86" if /I not "%ARCH%"=="x64" if /I not "%ARCH%"=="arm64" set BOTH=1
+
+if %BOTH% == 1 (
+  echo Only x86 ^(32-bit^), x64 ^(64-bit^) or arm64 architectures are supported!
+  goto :eof
+)
+
 if /I "%ARCH%"=="x86" (
   set QT=C:\Qt\5.13.2\msvc2017\
   set VSARCH=x86
@@ -19,14 +27,11 @@ if /I "%ARCH%"=="x86" (
   set QT=C:\Qt\5.13.2\msvc2017_64\
   set VSARCH=amd64
   set CMAKE_ARCH=x64
-) else (
-  echo Only x86 ^(32-bit^), x64 ^(64-bit^) or arm64 architectures are supported!
-  goto :eof
 )
 
 call "c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %VSARCH%
 
-set PATH=%QT%bin;%PATH%
+set PATH=%QT%\bin;%PATH%
 
 set ROOT="%~dp0.."
 set BUILD="%~dp0..\build\build\release"
@@ -45,7 +50,7 @@ if "%ERRORLEVEL%" equ "0" (
 if "%ARCH%"=="x86" (
   set TARGET="%~dp0\..\release\rclone-browser-%VERSION_COMMIT%-windows-32-bit"
   set TARGET_EXE="%~dp0\..\release\rclone-browser-%VERSION_COMMIT%-windows-32-bit"
-) else if "%ARCH%"=="arm64" (
+) else if "%ARCH%" == "arm64" (
   set TARGET="%~dp0\..\release\rclone-browser-%VERSION_COMMIT%-windows-arm64"
   set TARGET_EXE="%~dp0\..\release\rclone-browser-%VERSION_COMMIT%-windows-arm64"
 ) else (
@@ -79,36 +84,27 @@ copy "%BUILD%\RcloneBrowser.exe" "%TARGET%"
 windeployqt.exe --no-translations --no-angle --no-compiler-runtime --no-svg "%TARGET%\RcloneBrowser.exe"
 rd /s /q "%TARGET%\imageformats"
 
-rem include all MSVCruntime dlls
 copy "%VCToolsRedistDir%\%ARCH%\Microsoft.VC142.CRT\msvcp140.dll" "%TARGET%\"
 copy "%VCToolsRedistDir%\%ARCH%\Microsoft.VC142.CRT\vcruntime140*.dll" "%TARGET%\"
 
-rem for Windows 32 bits build include relevant openssl libraries
 if "%ARCH%"=="x86" (
-copy "c:\Program Files (x86)\openssl-1.1.1d-win32\libssl-1_1.dll" "%TARGET%\"
-copy "c:\Program Files (x86)\openssl-1.1.1d-win32\libcrypto-1_1.dll" "%TARGET%\"
+  copy "c:\Program Files (x86)\openssl-1.1.1d-win32\libssl-1_1.dll" "%TARGET%\"
+  copy "c:\Program Files (x86)\openssl-1.1.1d-win32\libcrypto-1_1.dll" "%TARGET%\"
 )
 
 (
-echo [Paths]
-echo Prefix = .
-echo LibraryExecutables = .
-echo Plugins = .
-)>"%TARGET%\qt.conf"
+  echo [Paths]
+  echo Prefix = .
+  echo LibraryExecutables = .
+  echo Plugins = .
+) > "%TARGET%\qt.conf"
 
-rem https://www.7-zip.org/
-rem create zip archive of all files
 "c:\Program Files\7-Zip\7z.exe" a -mx=9 -r -tzip "%TARGET%.zip" "%TARGET%"
 
-rem create proper installer
-rem Inno Setup installer by https://github.com/jrsoftware/issrc
-rem in case user wants to install both 32bits and 64bits versions we need two AppId
-rem 64bits ;AppId={{0AF9BF43-8D44-4AFF-AE60-6CECF1BF0D31}
-rem 32bits ;AppId={{5644ED3A-6028-47C0-9796-29548EF7CEA3}
 if "%ARCH%"=="x86" (
-"c:\Program Files (x86)\Inno Setup 6"\iscc "/dMyAppVersion=%VERSION%" "/dMyAppId={{5644ED3A-6028-47C0-9796-29548EF7CEA3}" "/dMyAppDir=rclone-browser-%VERSION_COMMIT%-windows-32-bit" "/dMyAppArch=x86" /O"../release" /F"rclone-browser-%VERSION_COMMIT%-windows-32-bit" rclone-browser-win-installer.iss
-) else if "%ARCH%"=="arm64" (
-"c:\Program Files (x86)\Inno Setup 6"\iscc "/dMyAppVersion=%VERSION%" "/dMyAppId={{0AF9BF43-8D44-4AFF-AE60-6CECF1BF0D31}" "/dMyAppDir=rclone-browser-%VERSION_COMMIT%-windows-arm64" "/dMyAppArch=arm64" /O"../release" /F"rclone-browser-%VERSION_COMMIT%-windows-arm64" rclone-browser-win-installer.iss
+  "c:\Program Files (x86)\Inno Setup 6"\iscc "/dMyAppVersion=%VERSION%" "/dMyAppId={{5644ED3A-6028-47C0-9796-29548EF7CEA3}" "/dMyAppDir=rclone-browser-%VERSION_COMMIT%-windows-32-bit" "/dMyAppArch=x86" /O"../release" /F"rclone-browser-%VERSION_COMMIT%-windows-32-bit" rclone-browser-win-installer.iss
+) else if "%ARCH%" == "arm64" (
+  "c:\Program Files (x86)\Inno Setup 6"\iscc "/dMyAppVersion=%VERSION%" "/dMyAppId={{0AF9BF43-8D44-4AFF-AE60-6CECF1BF0D31}" "/dMyAppDir=rclone-browser-%VERSION_COMMIT%-windows-arm64" "/dMyAppArch=arm64" /O"../release" /F"rclone-browser-%VERSION_COMMIT%-windows-arm64" rclone-browser-win-installer.iss
 ) else (
-"c:\Program Files (x86)\Inno Setup 6"\iscc "/dMyAppVersion=%VERSION%" "/dMyAppId={{0AF9BF43-8D44-4AFF-AE60-6CECF1BF0D31}" "/dMyAppDir=rclone-browser-%VERSION_COMMIT%-windows-64-bit" "/dMyAppArch=x64" /O"../release" /F"rclone-browser-%VERSION_COMMIT%-windows-64-bit" rclone-browser-win-installer.iss
+  "c:\Program Files (x86)\Inno Setup 6"\iscc "/dMyAppVersion=%VERSION%" "/dMyAppId={{0AF9BF43-8D44-4AFF-AE60-6CECF1BF0D31}" "/dMyAppDir=rclone-browser-%VERSION_COMMIT%-windows-64-bit" "/dMyAppArch=x64" /O"../release" /F"rclone-browser-%VERSION_COMMIT%-windows-64-bit" rclone-browser-win-installer.iss
 )
