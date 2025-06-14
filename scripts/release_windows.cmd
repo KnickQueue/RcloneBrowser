@@ -2,23 +2,29 @@
 setlocal enabledelayedexpansion
 
 if "%1" == "" (
-  echo Please specify x86 ^(32-bit^) or x64 ^(64-bit^) architecture in cmdline
+  echo Please specify x86 ^(32-bit^), x64 ^(64-bit^) or arm64 architecture in cmdline
   goto :eof
 )
 
 set BOTH=0
-if not "%1" == "x86" if not "%1" == "x64" set BOTH=1
+if not "%1" == "x86" if not "%1" == "x64" if not "%1" == "arm64" set BOTH=1
 
 if %BOTH% == 1  (
-  echo Only x86 ^(32-bit^) or x64 ^(64-bit^) architectures are supported!
+  echo Only x86 ^(32-bit^), x64 ^(64-bit^) or arm64 architectures are supported!
   goto :eof
 )
 
 set ARCH=%1
-call "c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %ARCH%
+if "%ARCH%" == "arm64" (
+  call "c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" x64_arm64
+) else (
+  call "c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %ARCH%
+)
 
 if "%ARCH%" == "x86" (
 set QT=C:\Qt\5.13.2\msvc2017\
+) else if "%ARCH%" == "arm64" (
+set QT=C:\Qt\5.13.2\msvc2017_arm64\
 ) else (
 set QT=C:\Qt\5.13.2\msvc2017_64\
 )
@@ -41,6 +47,9 @@ if "%ERRORLEVEL%" equ "0" (
 if "%ARCH%" == "x86" (
   set TARGET="%~dp0\..\release\rclone-browser-%VERSION_COMMIT%-windows-32-bit"
   set TARGET_EXE="%~dp0\..\release\rclone-browser-%VERSION_COMMIT%-windows-32-bit"
+) else if "%ARCH%" == "arm64" (
+  set TARGET="%~dp0\..\release\rclone-browser-%VERSION_COMMIT%-windows-arm64"
+  set TARGET_EXE="%~dp0\..\release\rclone-browser-%VERSION_COMMIT%-windows-arm64"
 ) else (
   set TARGET="%~dp0\..\release\rclone-browser-%VERSION_COMMIT%-windows-64-bit"
   set TARGET_EXE="%~dp0\..\release\rclone-browser-%VERSION_COMMIT%-windows-64-bit"
@@ -60,9 +69,11 @@ cd build
 
 if "%ARCH%" == "x86" (
 cmake -G %CMAKEGEN% -A Win32 -DCMAKE_CONFIGURATION_TYPES="Release" -DCMAKE_PREFIX_PATH=%QT% ..
+) else if "%ARCH%" == "arm64" (
+cmake -G %CMAKEGEN% -A arm64 -DCMAKE_CONFIGURATION_TYPES="Release" -DCMAKE_PREFIX_PATH=%QT% ..
 ) else (
 cmake -G %CMAKEGEN% -A x64 -DCMAKE_CONFIGURATION_TYPES="Release" -DCMAKE_PREFIX_PATH=%QT% ..
-)
+) 
 
 cmake --build . --config Release
 popd
@@ -105,6 +116,8 @@ rem 64bits ;AppId={{0AF9BF43-8D44-4AFF-AE60-6CECF1BF0D31}
 rem 32bits ;AppId={{5644ED3A-6028-47C0-9796-29548EF7CEA3}
 if "%ARCH%" == "x86" (
 "c:\Program Files (x86)\Inno Setup 6"\iscc "/dMyAppVersion=%VERSION%" "/dMyAppId={{5644ED3A-6028-47C0-9796-29548EF7CEA3}" "/dMyAppDir=rclone-browser-%VERSION_COMMIT%-windows-32-bit" "/dMyAppArch=x86" /O"../release" /F"rclone-browser-%VERSION_COMMIT%-windows-32-bit" rclone-browser-win-installer.iss
+) else if "%ARCH%" == "arm64" (
+"c:\Program Files (x86)\Inno Setup 6"\iscc "/dMyAppVersion=%VERSION%" "/dMyAppId={{0AF9BF43-8D44-4AFF-AE60-6CECF1BF0D31}" "/dMyAppDir=rclone-browser-%VERSION_COMMIT%-windows-arm64" "/dMyAppArch=arm64" /O"../release" /F"rclone-browser-%VERSION_COMMIT%-windows-arm64" rclone-browser-win-installer.iss
 ) else (
 "c:\Program Files (x86)\Inno Setup 6"\iscc "/dMyAppVersion=%VERSION%" "/dMyAppId={{0AF9BF43-8D44-4AFF-AE60-6CECF1BF0D31}" "/dMyAppDir=rclone-browser-%VERSION_COMMIT%-windows-64-bit" "/dMyAppArch=x64" /O"../release" /F"rclone-browser-%VERSION_COMMIT%-windows-64-bit" rclone-browser-win-installer.iss
 )
