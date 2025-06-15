@@ -14,7 +14,7 @@ set -e
   # sudo mkdir /opt/cmake
   # sudo sh cmake-$version.$build-Linux-x86_64.sh --prefix=/opt/cmake
 
-  if [ $(arch) = "x86_64" ]; then
+  if [ "$(arch)" = "x86_64" ]; then
     CMAKE="/opt/cmake/bin/cmake"
   fi
 
@@ -40,7 +40,7 @@ if [ "$1" = "SIGN" ]; then
 fi
 
 # check gcc version on Centos
-if [ $(arch) = "x86_64" ]; then
+if [ "$(arch)" = "x86_64" ]; then
   currentver="$(gcc -dumpversion)"
   if [ "${currentver:0:1}" -lt "7"  ]; then
     echo "gcc version 7 or newer required"
@@ -68,7 +68,7 @@ TARGET=rclone-browser-$VERSION.AppImage
 
 # clean AppImage temporary folder
 if [ -d "$TEMP_BASE/$TARGET" ]; then
-  rm -rf "$TEMP_BASE/$TARGET"
+  rm -rf "${TEMP_BASE:?}/$TARGET"
 fi
 mkdir "$TEMP_BASE/$TARGET"
 
@@ -82,35 +82,35 @@ mkdir "$BUILD"
 mkdir -p "$ROOT"/release
 
 # clean current version previous build
-if [ $(arch) = "armv7l" ] && [ -f "$ROOT"/release/rclone-browser-"$VERSION"-armhf.AppImage ]; then
+if [ "$(arch)" = "armv7l" ] && [ -f "$ROOT/release/rclone-browser-$VERSION-armhf.AppImage" ]; then
   rm "$ROOT"/release/rclone-browser-"$VERSION"-raspberrypi-armhf.AppImage
 fi
 
-if [ $(arch) = "i686" ] && [ -f "$ROOT"/release/rclone-browser-"$VERSION"-i386.AppImage ]; then
+if [ "$(arch)" = "i686" ] && [ -f "$ROOT/release/rclone-browser-$VERSION-i386.AppImage" ]; then
   rm "$ROOT"/release/rclone-browser-"$VERSION"-linux-i386.AppImage
 fi
 
-if [ $(arch) = "x86_64" ] && [ -f "$ROOT"/release/rclone-browser-"$VERSION"-x86_64.AppImage ]; then
+if [ "$(arch)" = "x86_64" ] && [ -f "$ROOT/release/rclone-browser-$VERSION-x86_64.AppImage" ]; then
   rm "$ROOT"/release/rclone-browser-"$VERSION"-linux-x86_64.AppImage
 fi
 
 # build and install to temporary AppDir folder
 cd "$BUILD"
 
-if [ $(arch) = "armv7l" ]; then
+if [ "$(arch)" = "armv7l" ]; then
   # more threads need swap on 1GB RAM RPi
   cmake .. -DCMAKE_INSTALL_PREFIX=/usr
   make -j 2
 fi
 
-if [ $(arch) = "x86_64" ]; then
+if [ "$(arch)" = "x86_64" ]; then
   "$CMAKE" .. -DCMAKE_INSTALL_PREFIX=/usr
-  make --jobs=$(nproc --all)
+  make --jobs="$(nproc --all)"
 fi
 
-if [ $(arch) = "i686" ]; then
+if [ "$(arch)" = "i686" ]; then
   cmake .. -DCMAKE_INSTALL_PREFIX=/usr
-  make --jobs=$(nproc --all)
+  make --jobs="$(nproc --all)"
 fi
 
 make install DESTDIR="$TEMP_BASE"/"$TARGET"/AppDir
@@ -132,7 +132,7 @@ cp "$ROOT"/LICENSE "$TEMP_BASE"/"$TARGET"/AppDir/License.txt
 linuxdeploy --appdir AppDir --desktop-file=AppDir/usr/share/applications/rclone-browser.desktop --plugin qt
 #linuxdeploy-plugin-qt --appdir AppDir
 
-if [ $(arch) != "armv7l" ]
+if [ "$(arch)" != "armv7l" ]
 then
   # we add openssl 1.1.1 libs needed for distros still using openssl 1.0
   cp /opt/openssl-1.1.1/lib/libssl.so.1.1 ./AppDir/usr/bin/
@@ -143,19 +143,19 @@ fi
 linuxdeploy-plugin-appimage --appdir=AppDir
 
 # raspberry pi build
-if [ $(arch) = "armv7l" ]; then
+if [ "$(arch)" = "armv7l" ]; then
   rename 's/armhf/raspberrypi-armhf/' Rclone_Browser*
   rename 's/Rclone_Browser/rclone-browser/' Rclone_Browser*
 fi
 
 # x86 build
-if [ $(arch) = "i686" ]; then
+if [ "$(arch)" = "i686" ]; then
   rename 's/i386/linux-i386/' Rclone_Browser*
   rename 's/Rclone_Browser/rclone-browser/' Rclone_Browser*
 fi
 
 # x86_64 build
-if [ $(arch) = "x86_64" ]; then
+if [ "$(arch)" = "x86_64" ]; then
   rename x86_64 linux-x86_64 Rclone_Browser*
   rename Rclone_Browser rclone-browser Rclone_Browser*
 fi
