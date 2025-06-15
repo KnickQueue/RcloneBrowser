@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 set -e
 
@@ -21,8 +21,9 @@ fi
 if [ -f "$ROOT"/release/"$DMG".dmg ]; then
   rm "$ROOT"/release/"$DMG".dmg
 fi
-if [ -d "$ROOT"/release/"Rclone Browser.app" ]; then
-  rm -rf "$ROOT"/release/"Rclone Browser.app"
+APP_BUNDLE="$ROOT/release/Rclone Browser.app"
+if [ -d "$APP_BUNDLE" ]; then
+  rm -rf "$APP_BUNDLE"
 fi
 
 
@@ -32,7 +33,7 @@ cd "$BUILD"
 # brew install cmake qt5
 cmake .. -DCMAKE_PREFIX_PATH="$QTDIR" -DCMAKE_BUILD_TYPE=Release
 # brew install coreutils
-make --jobs=$(nproc --all)
+make --jobs="$(nproc --all)"
 cd build
 "$QTDIR"/bin/macdeployqt rclone-browser.app -executable="rclone-browser.app/Contents/MacOS/rclone-browser" -qmldir=../src/
 cd ../..
@@ -45,7 +46,7 @@ cp -R "$BUILD"/build/rclone-browser.app "$APP"
 cp "$ROOT"/README.md "$APP"/Readme.md
 cp "$ROOT"/CHANGELOG.md "$APP"/Changelog.md
 cp "$ROOT"/LICENSE "$APP"/License.txt
-mv "$APP"/Contents/MacOS/rclone-browser "$APP"/Contents/MacOS/"Rclone Browser"
+mv "$APP/Contents/MacOS/rclone-browser" "$APP/Contents/MacOS/Rclone Browser"
 
 sed -i .bak 's/rclone-browser/Rclone Browser/g' "$APP"/Contents/Info.plist
 rm "$APP"/Contents/*.bak
@@ -66,7 +67,7 @@ echo
 echo "Preparing dmg file"
 # brew install node && npm install -g appdmg
 # https://github.com/LinusU/node-appdmg
-cp -R "$TARGET"/"Rclone Browser.app" .
+cp -R "$TARGET/Rclone Browser.app" .
 cd ../scripts
 appdmg ../assets/appdmg.json ../release/"$DMG".dmg
 cd ../release

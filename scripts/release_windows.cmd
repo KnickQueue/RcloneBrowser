@@ -30,7 +30,6 @@ if /I "%ARCH%"=="x86" (
 )
 
 call "c:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Auxiliary\Build\vcvarsall.bat" %VSARCH%
-
 set PATH=%QT%\bin;%PATH%
 
 set ROOT="%~dp0.."
